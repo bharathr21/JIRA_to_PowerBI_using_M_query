@@ -1,0 +1,16 @@
+let
+    
+   singleUrl = "http://YOUR_JIRA_SITE/rest/api/2/search?jql=project=YOUR_PROJECT&maxResults=1",
+   incUrl = "http://YOUR_JIRA_SITE/rest/api/2/search?jql=project=YOUR_PROJECT&maxResults=",
+   r=Web.Contents(singleUrl),
+   data=Json.Document(r),
+   total=data[total],
+   fullUrl=Text.Combine({incUrl,Number.ToText(Number.RoundUp(total/2))}),
+   fullreq=Web.Contents(fullUrl,[Timeout=#duration(0,0,15,0)]),
+   fulldata=Json.Document(fullreq),
+    #"Converted to Table" = Record.ToTable(fulldata),
+    #"Transposed Table" = Table.Transpose(#"Converted to Table"),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"expand", type text}, {"startAt", Int64.Type}, {"maxResults", Int64.Type}, {"total", Int64.Type}, {"issues", type any}})
+in
+    #"Changed Type"
